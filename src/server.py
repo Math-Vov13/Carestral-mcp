@@ -3,6 +3,7 @@
 import logging
 
 from fastmcp import FastMCP
+
 from auth import verifier
 
 # Configure logging
@@ -15,7 +16,7 @@ mcp = FastMCP("carestral-mcp", auth=verifier)
 
 
 @mcp.tool
-def greet(name: str) -> str:
+async def greet(name: str) -> str:
     return f"Hello, {name}!"
 
 
