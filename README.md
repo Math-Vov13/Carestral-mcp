@@ -48,6 +48,8 @@ python src/carestral_mcp/server.py
 
 Add to your MCP client configuration (e.g., Claude Desktop config):
 
+**Note:** Replace `/path/to/Carestral-mcp/src` with your actual installation path.
+
 ```json
 {
   "mcpServers": {

@@ -1,6 +1,8 @@
 """Carestral MCP Server - Main server implementation."""
 
 import asyncio
+import datetime
+import json
 import logging
 from typing import Any
 
@@ -116,13 +118,12 @@ async def list_resources() -> list[Resource]:
 async def read_resource(uri: str) -> str:
     """Read healthcare resource content."""
     if uri == "carestral://symptoms/database":
-        import json
         return json.dumps(SYMPTOM_DATABASE, indent=2)
     elif uri == "carestral://specialties/list":
-        import json
         return json.dumps(SPECIALTIES, indent=2)
     else:
-        raise ValueError(f"Unknown resource: {uri}")
+        available = ["carestral://symptoms/database", "carestral://specialties/list"]
+        raise ValueError(f"Unknown resource: {uri}. Available resources: {available}")
 
 
 @app.list_tools()
@@ -207,6 +208,12 @@ async def list_tools() -> list[Tool]:
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     """Execute healthcare tools."""
+    if not isinstance(arguments, dict):
+        return [TextContent(
+            type="text",
+            text=f"Error: Invalid arguments type. Expected dict, got {type(arguments).__name__}"
+        )]
+
     if name == "assess_symptoms":
         return await assess_symptoms(arguments)
     elif name == "find_specialist":
@@ -214,7 +221,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     elif name == "create_referral":
         return await create_referral(arguments)
     else:
-        raise ValueError(f"Unknown tool: {name}")
+        available = ["assess_symptoms", "find_specialist", "create_referral"]
+        raise ValueError(f"Unknown tool: {name}. Available tools: {available}")
 
 
 async def assess_symptoms(arguments: dict) -> list[TextContent]:
@@ -354,8 +362,9 @@ async def create_referral(arguments: dict) -> list[TextContent]:
     priority = arguments.get("priority", "routine")
 
     # Generate referral document
-    import datetime
-    referral_id = f"REF-{datetime.datetime.now().strftime('%Y%m%d')}-{patient_id[:8]}"
+    # Handle short patient IDs gracefully
+    patient_id_suffix = patient_id[:8] if len(patient_id) >= 8 else patient_id.ljust(8, '0')
+    referral_id = f"REF-{datetime.datetime.now().strftime('%Y%m%d')}-{patient_id_suffix}"
 
     report = "**MEDICAL REFERRAL CREATED**\n\n"
     report += f"**Referral ID:** {referral_id}\n"
@@ -482,7 +491,8 @@ Keep the tone professional and include all necessary medical details.
         return prompt
 
     else:
-        raise ValueError(f"Unknown prompt: {name}")
+        available = ["triage_patient", "referral_letter"]
+        raise ValueError(f"Unknown prompt: {name}. Available prompts: {available}")
 
 
 async def main():
