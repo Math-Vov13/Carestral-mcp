@@ -3,7 +3,7 @@
 import logging
 
 from fastmcp import FastMCP
-from .auth import verifier
+from auth import verifier
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
