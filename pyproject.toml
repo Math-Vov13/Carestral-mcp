@@ -3,23 +3,13 @@ name = "carestral-mcp"
 version = "0.1.0"
 description = "MCP (Model Context Protocol) server to connect doctors, hospitals and patients worldwide with AI-powered symptom assessment"
 authors = [
-    {name = "Carestral Team"}
+    {name = "Mathéo V", email = "MathVov.91@outlook.fr"},
 ]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "fastmcp>=2.14.4",
 ]
-
-[project.optional-dependencies]
-dev = [
-    "pytest-asyncio>=0.23.0",
-    "ruff>=0.1.0",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 100
@@ -29,17 +19,9 @@ target-version = "py310"
 select = ["E", "F", "I", "N", "W"]
 ignore = []
 
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "fastmcp[cli]>=2.14.4",
-]
-
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "ruff>=0.14.14",
 ]
