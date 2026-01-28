@@ -21,4 +21,4 @@ def greet(name: str) -> str:
 
 if __name__ == "__main__":
     logger.info("Starting Carestral MCP Server...")
-    mcp.run(transport="http", port=8000)
+    mcp.run(transport="http", port=8080)
