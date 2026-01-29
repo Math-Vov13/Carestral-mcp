@@ -1,10 +1,14 @@
 """Carestral MCP Server - Main server implementation."""
 
 import logging
+import random
+from typing import List
 
 from fastmcp import Context, FastMCP
 
 from auth import verifier
+from models.db_models import (AppointmentRequest, Hospital, HospitalStatus,
+                              Patient)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
