@@ -1,4 +1,6 @@
 from os import getenv
+from dotenv import load_dotenv
+load_dotenv()
 
 from fastmcp.server.auth.providers.jwt import JWTVerifier
 
