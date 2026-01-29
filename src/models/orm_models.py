@@ -20,6 +20,7 @@ class User(Base):
     """User model."""
 
     __tablename__ = "User"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Text, primary_key=True)
     email = Column(Text, nullable=False, unique=True)
@@ -45,6 +46,7 @@ class Hospital(Base):
     """Hospital model."""
 
     __tablename__ = "Hospital"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Text, primary_key=True)
     name = Column(Text, nullable=False)
@@ -65,6 +67,7 @@ class Appointment(Base):
     """Appointment model."""
 
     __tablename__ = "Appointment"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Text, primary_key=True)
     userId = Column(Text, ForeignKey("User.id"), nullable=False)
@@ -86,6 +89,7 @@ class Booking(Base):
     """Booking model."""
 
     __tablename__ = "Booking"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Text, primary_key=True)
     userId = Column(Text, ForeignKey("User.id"), nullable=False)
@@ -102,6 +106,7 @@ class HospitalStatus(Base):
     """HospitalStatus model."""
 
     __tablename__ = "HospitalStatus"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Text, primary_key=True)
     hospitalId = Column(Text, ForeignKey("Hospital.id"), nullable=False)
@@ -119,6 +124,7 @@ class MCP(Base):
     """MCP model."""
 
     __tablename__ = "MCP"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Text, primary_key=True)
     userId = Column(Text, ForeignKey("User.id"), nullable=False)
@@ -136,6 +142,7 @@ class TempToken(Base):
     """TempToken model."""
 
     __tablename__ = "TempToken"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Text, primary_key=True)
     token = Column(Text, nullable=False)

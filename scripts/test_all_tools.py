@@ -4,7 +4,6 @@ import asyncio
 import sys
 from pathlib import Path
 
-# Add src to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from database import get_db
@@ -18,7 +17,6 @@ async def test_get_patient_data():
     print("=" * 60)
 
     async with get_db() as session:
-        # Get first user as example
         from sqlalchemy import select
 
         from models import orm_models
@@ -141,30 +139,24 @@ async def main():
     print("=" * 60)
 
     try:
-        # Test 1: Get patient data
         user_id = await test_get_patient_data()
 
         if user_id is None:
             print("\n[ERROR] Cannot continue tests without user data")
             return
 
-        # Test 2: Get hospitals
         hospital_id = await test_get_hospitals()
 
         if hospital_id is None:
             print("\n[ERROR] Cannot continue tests without hospital data")
             return
 
-        # Test 3: Create appointment
         appointment_id = await test_create_appointment(user_id, hospital_id)
 
-        # Test 4: Get appointment status
         await test_get_appointment_status(appointment_id)
 
-        # Test 5: Get hospital status
         await test_get_hospital_status(hospital_id)
 
-        # Cleanup
         await cleanup_test_appointment(appointment_id)
 
         print("\n" + "=" * 60)
