@@ -200,7 +200,7 @@ async def get_profile(ctx: Context) -> dict:
 
     # Try to get user from database by email (client_id is usually email)
     async with get_db() as session:
-        user = await db_service.get_user_by_email(session, token.client_id)
+        user = await db_service.get_user_by_id(session, token.client_id)
 
         if user:
             return {
