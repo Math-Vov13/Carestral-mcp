@@ -7,7 +7,7 @@ verifier = StaticTokenVerifier(
             "client_id": "alice@company.com",
             "scopes": ["read:data", "write:data", "admin:users"]
         },
-        "dev-guest-token": {
+        "dev-guest-token-null": {
             "client_id": "guest-user",
             "scopes": ["read:data"]
         }
