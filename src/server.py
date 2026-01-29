@@ -7,8 +7,7 @@ from typing import List
 from fastmcp import Context, FastMCP
 
 from auth import verifier
-from models.db_models import (AppointmentRequest, Hospital, HospitalStatus,
-                              Patient)
+from models.db_models import AppointmentRequest, Hospital, HospitalStatus, Patient
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,7 +23,7 @@ async def greet(name: str) -> str:
     return f"Hello, {name}!"
 
 @mcp.tool
-def getPatientData(patient_id: str) -> Patient:
+def getpatientdata(patient_id: str) -> Patient:
     """Fetch patient data from database"""
 
     # -------------------------------------------------------------------
@@ -41,7 +40,7 @@ def getPatientData(patient_id: str) -> Patient:
     return db.get(patient_id)
 
 @mcp.tool
-def getNearHosp(city: str) -> List[Hospital]:
+def getnearhosp(city: str) -> List[Hospital]:
     """Return nearby hospitals for a given city"""
 
     # -------------------------------------------------------------------
@@ -59,7 +58,7 @@ def getNearHosp(city: str) -> List[Hospital]:
     return [h for h in hospitals if h.city == city]
 
 @mcp.tool
-def getHospData(hospital_id: str) -> Hospital:
+def gethospdata(hospital_id: str) -> Hospital:
     """Return hospital details"""
 
     # -------------------------------------------------------------------
@@ -73,10 +72,10 @@ def getHospData(hospital_id: str) -> Hospital:
     }
     # -------------------------------------------------------------------
 
-    return hospitals[hospital_id] 
+    return hospitals[hospital_id]
 
 @mcp.tool
-def createRDV(request: AppointmentRequest) -> str:
+def create_rdv(request: AppointmentRequest) -> str:
     """Create an appointment in hospital system"""
 
     # -------------------------------------------------------------------
@@ -85,7 +84,8 @@ def createRDV(request: AppointmentRequest) -> str:
     confirmation_id = f"RDV-{random.randint(1000,9999)}"
     return f"Appointment confirmed: {confirmation_id}"
 
-def getHospDispo(hospital_id: str) -> HospitalStatus:
+@mcp.tool
+def gethospdispo(hospital_id: str) -> HospitalStatus:
     """Return live hospital availability"""
 
     # -------------------------------------------------------------------
@@ -99,6 +99,57 @@ def getHospDispo(hospital_id: str) -> HospitalStatus:
     # -------------------------------------------------------------------
 
     return status
+
+@mcp.tool
+def assess_symptoms(symptoms: List[str], duration: str = None, severity: str = None) -> dict:
+    """Assess patient symptoms and provide severity levels and recommendations."""
+    # -------------------------------------------------------------------
+    # - Medical base
+    # -assess algo
+    assessment = {
+        "symptoms": symptoms,
+        "duration": duration,
+        "severity": severity,
+        "assessment": "Mild",
+        "recommendation": "Rest and stay hydrated. Consult a doctor if symptoms persist."
+    }
+    # -------------------------------------------------------------------
+
+    return assessment
+
+
+
+@mcp.tool
+def create_referral(patient_id: str, specialist: str, reason: str, priority: str = None) -> dict:
+    """Create a referral for a patient to see a specialist."""
+    # -------------------------------------------------------------------
+    # - Referral management system
+    referral_id = f"REF-{random.randint(10000,99999)}"
+    return {
+        "referral_id": referral_id,
+        "patient_id": patient_id,
+        "specialist": specialist,
+        "reason": reason,
+        "priority": priority or "Normal",
+        "status": "Created"
+    }
+
+@mcp.tool
+def getappointment_status(appointment_id: str) -> dict:
+    """Get the status of an appointment."""
+    # -------------------------------------------------------------------
+    # - tracking system
+    status_options = ["Scheduled", "Completed", "Cancelled", "No-Show"]
+    status = random.choice(status_options)
+    return {
+        "appointment_id": appointment_id,
+        "status": status
+    }
+
+
+
+
+
 
 @mcp.tool
 async def get_profile(ctx: Context) -> dict:
