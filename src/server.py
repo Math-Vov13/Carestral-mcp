@@ -14,6 +14,9 @@ from models.db_models import (AppointmentRequest, Hospital, HospitalStatus,
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+logging.getLogger("fastmcp.server.auth").setLevel(logging.DEBUG)
+
+
 
 # Initialize MCP server
 mcp = FastMCP("mcp-carestral", auth=verifier)
