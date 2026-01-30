@@ -20,11 +20,7 @@ mcp = FastMCP("mcp-carestral", auth=verifier)
 
 
 @mcp.tool
-async def greet(name: str) -> str:
-    return f"Hello, {name}!"
-
-@mcp.tool
-async def getnearhosp(city: str) -> List[Hospital]:
+async def search_hospitals(city: str) -> List[Hospital]:
     """Return nearby hospitals for a given city"""
 
     # Fetch hospitals from database
@@ -45,8 +41,8 @@ async def getnearhosp(city: str) -> List[Hospital]:
         return hospitals
 
 @mcp.tool
-async def gethospdata(hospital_id: str) -> Hospital:
-    """Return hospital details"""
+async def get_hospital_data(hospital_id: str) -> Hospital:
+    """Get hospital details for hospital_id"""
 
     # Fetch hospital from database
     async with get_db() as session:
@@ -64,7 +60,7 @@ async def gethospdata(hospital_id: str) -> Hospital:
 
 @mcp.tool
 async def create_rdv(request: AppointmentRequest) -> str:
-    """Create an appointment in hospital system"""
+    """Create an appointment in hospital system. When the rdv is taken, you can ask user to load rdv in its own Google Calendar."""
 
     token = fastmcp.server.dependencies.get_access_token()
     if not token:
@@ -95,7 +91,7 @@ async def create_rdv(request: AppointmentRequest) -> str:
         return f"Appointment confirmed: {appointment.id}"  # type: ignore[arg-type]
 
 @mcp.tool
-async def gethospdispo(hospital_id: str) -> HospitalStatus:
+async def get_hospital_dispo(hospital_id: str) -> HospitalStatus:
     """Return live hospital availability"""
 
     # Fetch hospital status from database
@@ -117,27 +113,6 @@ async def gethospdispo(hospital_id: str) -> HospitalStatus:
             icuBeds=db_status.icuBeds or 0,  # type: ignore[arg-type]
             ventilators=db_status.ventilators or 0,  # type: ignore[arg-type]
         )
-
-@mcp.tool
-def assess_symptoms(
-    symptoms: List[str], duration: str | None = None, severity: str | None = None
-) -> dict:
-    """Assess patient symptoms and provide severity levels and recommendations."""
-    # -------------------------------------------------------------------
-    # - Medical base
-    # -assess algo
-    assessment = {
-        "symptoms": symptoms,
-        "duration": duration,
-        "severity": severity,
-        "assessment": "Mild",
-        "recommendation": "Rest and stay hydrated. Consult a doctor if symptoms persist."
-    }
-    # -------------------------------------------------------------------
-
-    return assessment
-
-
 
 @mcp.tool
 def create_referral(
