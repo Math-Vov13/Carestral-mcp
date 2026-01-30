@@ -33,7 +33,7 @@ class Hospital(BaseModel):
 
 class AppointmentRequest(BaseModel):
     """Request model for creating appointments"""
-    hospital_id: str
+    hospital_name: str
     date: str
     time: str
 
