@@ -7,7 +7,7 @@ import fastmcp.server.dependencies
 from fastmcp import Context, FastMCP
 
 from auth import verifier
-from database import get_db
+from database import get_db, init_db
 from models.db_models import AppointmentRequest, Hospital
 from services import db_service
 
@@ -200,5 +200,7 @@ async def get_profile(ctx: Context) -> dict:
             }
 
 if __name__ == "__main__":
+    import asyncio
     logger.info("Starting Carestral MCP Server...")
+    asyncio.run(init_db())
     mcp.run(transport="http", port=8080)
