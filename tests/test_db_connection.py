@@ -29,7 +29,6 @@ async def test_tables():
         "User",
         "Hospital",
         "Appointment",
-        "Booking",
         "HospitalStatus",
         "MCP",
         "TempToken",
