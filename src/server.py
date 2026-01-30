@@ -4,11 +4,12 @@ import logging
 import random
 from typing import List
 
+import fastmcp.server.dependencies
 from fastmcp import Context, FastMCP
 
 from auth import verifier
 from database import get_db
-from models.db_models import AppointmentRequest, Hospital, HospitalStatus, Patient
+from models.db_models import AppointmentRequest, Hospital, HospitalStatus
 from services import db_service
 
 logging.basicConfig(level=logging.INFO)
@@ -21,26 +22,6 @@ mcp = FastMCP("mcp-carestral", auth=verifier)
 @mcp.tool
 async def greet(name: str) -> str:
     return f"Hello, {name}!"
-
-@mcp.tool
-async def getpatientdata(patient_id: str) -> Patient | None:
-    """Fetch patient data from database"""
-
-    # Fetch user from database (patients are users in the system)
-    async with get_db() as session:
-        user = await db_service.get_user_by_id(session, patient_id)
-
-        if not user:
-            return None
-
-        # Convert User ORM model to Patient Pydantic model
-        return Patient(
-            id=user.id,  # type: ignore[arg-type]
-            name=f"{user.firstname or ''} {user.surname or ''}".strip(),  # type: ignore[arg-type]
-            age=user.age or 0,  # type: ignore[arg-type]
-            city="Unknown",  # City not stored in User table
-            medical_history=[],  # Medical history not stored in User table
-        )
 
 @mcp.tool
 async def getnearhosp(city: str) -> List[Hospital]:
@@ -56,7 +37,7 @@ async def getnearhosp(city: str) -> List[Hospital]:
                 id=h.id,  # type: ignore[arg-type]
                 name=h.name,  # type: ignore[arg-type]
                 city=h.city or "",  # type: ignore[arg-type]
-                distance_km=h.distanceKm or 0.0,  # type: ignore[arg-type]
+                distanceKm=h.distanceKm or 0.0,  # type: ignore[arg-type]
             )
             for h in db_hospitals
         ]
@@ -78,22 +59,38 @@ async def gethospdata(hospital_id: str) -> Hospital:
             id=db_hospital.id,  # type: ignore[arg-type]
             name=db_hospital.name,  # type: ignore[arg-type]
             city=db_hospital.city or "",  # type: ignore[arg-type]
-            distance_km=db_hospital.distanceKm or 0.0,  # type: ignore[arg-type]
+            distanceKm=db_hospital.distanceKm or 0.0,  # type: ignore[arg-type]
         )
 
 @mcp.tool
 async def create_rdv(request: AppointmentRequest) -> str:
     """Create an appointment in hospital system"""
 
-    # Create appointment in database
+    token = fastmcp.server.dependencies.get_access_token()
+    if not token:
+        raise ValueError("Not authenticated")
+
+    patient_id = token.client_id
+
     async with get_db() as session:
-        # Note: userId should be provided by authentication context
-        # For now, we use patient_id as userId (assuming they're the same)
+        hospital_identifier = request.hospital_id
+        hospital = await db_service.get_hospital_by_id(session, hospital_identifier)
+
+        # If not found by ID, try to find by name
+        if not hospital:
+            hospital = await db_service.get_hospital_by_name(session, hospital_identifier)
+
+        if not hospital:
+            raise ValueError(f"Hospital with ID or name '{hospital_identifier}' not found")
+
+        # Use the actual hospital ID from database
+        resolved_hospital_id: str = str(hospital.id)
+
         appointment = await db_service.create_appointment(
             session=session,
-            user_id=request.patient_id,
-            hospital_id=request.hospital_id,
-            patient_id=request.patient_id,
+            user_id=patient_id,
+            hospital_id=resolved_hospital_id,
+            patient_id=patient_id,
             date=request.date,
             time=request.time,
             description="Appointment created via MCP",
@@ -112,16 +109,16 @@ async def gethospdispo(hospital_id: str) -> HospitalStatus:
         if not db_status:
             # If no status exists, return default values
             return HospitalStatus(
-                hospital_id=hospital_id,
-                available_beds=0,
-                icu_beds=0,
+                hospitalId=hospital_id,
+                availableBeds=0,
+                icuBeds=0,
                 ventilators=0,
             )
 
         return HospitalStatus(
-            hospital_id=db_status.hospitalId,  # type: ignore[arg-type]
-            available_beds=db_status.availableBeds or 0,  # type: ignore[arg-type]
-            icu_beds=db_status.icuBeds or 0,  # type: ignore[arg-type]
+            hospitalId=db_status.hospitalId,  # type: ignore[arg-type]
+            availableBeds=db_status.availableBeds or 0,  # type: ignore[arg-type]
+            icuBeds=db_status.icuBeds or 0,  # type: ignore[arg-type]
             ventilators=db_status.ventilators or 0,  # type: ignore[arg-type]
         )
 
@@ -148,15 +145,19 @@ def assess_symptoms(
 
 @mcp.tool
 def create_referral(
-    patient_id: str, specialist: str, reason: str, priority: str | None = None
+    specialist: str, reason: str, priority: str | None = None
 ) -> dict:
-    """Create a referral for a patient to see a specialist."""
+    """Create a referral for the authenticated patient to see a specialist."""
+    token = fastmcp.server.dependencies.get_access_token()
+    if not token:
+        raise ValueError("Not authenticated")
+
     # -------------------------------------------------------------------
     # - Referral management system
     referral_id = f"REF-{random.randint(10000,99999)}"
     return {
         "referral_id": referral_id,
-        "patient_id": patient_id,
+        "patient_id": token.client_id,
         "specialist": specialist,
         "reason": reason,
         "priority": priority or "Normal",
@@ -165,7 +166,11 @@ def create_referral(
 
 @mcp.tool
 async def getappointment_status(appointment_id: str) -> dict:
-    """Get the status of an appointment."""
+    """Get the status of an appointment owned by the authenticated user."""
+
+    token = fastmcp.server.dependencies.get_access_token()
+    if not token:
+        raise ValueError("Not authenticated")
 
     # Fetch appointment from database
     async with get_db() as session:
@@ -176,6 +181,14 @@ async def getappointment_status(appointment_id: str) -> dict:
                 "appointment_id": appointment_id,
                 "status": "Not Found",
                 "error": "Appointment does not exist",
+            }
+
+        # Verify the appointment belongs to the authenticated user
+        if str(appointment.userId) != token.client_id:
+            return {
+                "appointment_id": appointment_id,
+                "status": "Access Denied",
+                "error": "You do not have access to this appointment",
             }
 
         return {
@@ -190,9 +203,7 @@ async def getappointment_status(appointment_id: str) -> dict:
 @mcp.tool
 async def get_profile(ctx: Context) -> dict:
     """Fetch user profile data from database with token claims."""
-    from fastmcp.server.dependencies import get_access_token
-
-    token = get_access_token()
+    token = fastmcp.server.dependencies.get_access_token()
     if not token:
         return {"error": "No access token found"}
 
