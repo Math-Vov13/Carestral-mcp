@@ -20,3 +20,6 @@ async def mcp_client():
 async def test_list_tools(mcp_client):
     tools = await mcp_client.list_tools()
     assert any(tool.name == "list_hospitals" for tool in tools)
+    assert any(tool.name == "search_hospitals" for tool in tools)
+    assert any(tool.name == "create_rdv" for tool in tools)
+    assert any(tool.name == "list_rdvs" for tool in tools)
