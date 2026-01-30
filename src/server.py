@@ -19,7 +19,7 @@ mcp = FastMCP("mcp-carestral", auth=verifier)
 
 
 @mcp.tool
-async def gethospitallist() -> List[Hospital]:
+async def list_hospitals() -> List[Hospital]:
     """Return all hospitals"""
 
     async with get_db() as session:
