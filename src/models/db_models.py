@@ -52,6 +52,21 @@ class Appointment(BaseModel):
     updatedAt: Optional[datetime] = None
 
 
+
+class Appointment(BaseModel):
+    """Appointment model - matches database schema"""
+    id: str
+    userId: str
+    hospitalId: str
+    patientId: Optional[str] = None
+    description: Optional[str] = None
+    date: Optional[str] = None
+    time: Optional[str] = None
+    status: Optional[str] = None
+    createdAt: Optional[datetime] = None
+    updatedAt: Optional[datetime] = None
+
+
 class HospitalStatus(BaseModel):
     """Hospital status model - matches database schema"""
     id: Optional[str] = None
