@@ -4,8 +4,8 @@ import logging
 import random
 from typing import List
 
+import fastmcp.server.dependencies
 from fastmcp import Context, FastMCP
-from fastmcp.server.dependencies import get_access_token
 
 from auth import verifier
 from database import get_db
@@ -66,7 +66,7 @@ async def gethospdata(hospital_id: str) -> Hospital:
 async def create_rdv(request: AppointmentRequest) -> str:
     """Create an appointment in hospital system"""
 
-    token = get_access_token()
+    token = fastmcp.server.dependencies.get_access_token()
     if not token:
         raise ValueError("Not authenticated")
 
@@ -148,7 +148,7 @@ def create_referral(
     specialist: str, reason: str, priority: str | None = None
 ) -> dict:
     """Create a referral for the authenticated patient to see a specialist."""
-    token = get_access_token()
+    token = fastmcp.server.dependencies.get_access_token()
     if not token:
         raise ValueError("Not authenticated")
 
@@ -168,7 +168,7 @@ def create_referral(
 async def getappointment_status(appointment_id: str) -> dict:
     """Get the status of an appointment owned by the authenticated user."""
 
-    token = get_access_token()
+    token = fastmcp.server.dependencies.get_access_token()
     if not token:
         raise ValueError("Not authenticated")
 
@@ -203,7 +203,7 @@ async def getappointment_status(appointment_id: str) -> dict:
 @mcp.tool
 async def get_profile(ctx: Context) -> dict:
     """Fetch user profile data from database with token claims."""
-    token = get_access_token()
+    token = fastmcp.server.dependencies.get_access_token()
     if not token:
         return {"error": "No access token found"}
 
