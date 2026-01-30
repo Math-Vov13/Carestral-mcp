@@ -39,29 +39,13 @@ class AppointmentRequest(BaseModel):
     hospital_name: str
     appointmentDateTime: datetime
 
-
 class Appointment(BaseModel):
     """Appointment model - matches database schema"""
     id: str
     userId: str
     hospitalId: str
     description: Optional[str] = None
-    appointmentDateTime: datetime
-    status: Optional[str] = None
-    createdAt: Optional[datetime] = None
-    updatedAt: Optional[datetime] = None
-
-
-
-class Appointment(BaseModel):
-    """Appointment model - matches database schema"""
-    id: str
-    userId: str
-    hospitalId: str
-    patientId: Optional[str] = None
-    description: Optional[str] = None
-    date: Optional[str] = None
-    time: Optional[str] = None
+    appointmentDateTime: Optional[datetime] = None
     status: Optional[str] = None
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
