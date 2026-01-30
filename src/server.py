@@ -73,15 +73,11 @@ async def create_rdv(request: AppointmentRequest) -> str:
     patient_id = token.client_id
 
     async with get_db() as session:
-        hospital_identifier = request.hospital_id
-        hospital = await db_service.get_hospital_by_id(session, hospital_identifier)
-
-        # If not found by ID, try to find by name
-        if not hospital:
-            hospital = await db_service.get_hospital_by_name(session, hospital_identifier)
+        hospital_identifier = request.hospital_name
+        hospital = await db_service.get_hospital_by_name(session, hospital_identifier)
 
         if not hospital:
-            raise ValueError(f"Hospital with ID or name '{hospital_identifier}' not found")
+            raise ValueError(f"Hospital with name '{hospital_identifier}' not found")
 
         # Use the actual hospital ID from database
         resolved_hospital_id: str = str(hospital.id)
