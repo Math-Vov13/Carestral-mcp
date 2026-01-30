@@ -27,6 +27,9 @@ class Hospital(BaseModel):
     address: Optional[str] = None
     phoneNumber: Optional[str] = None
     email: Optional[str] = None
+    availableBeds: Optional[int] = None
+    icuBeds: Optional[int] = None
+    ventilators: Optional[int] = None
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None
 
@@ -34,8 +37,7 @@ class Hospital(BaseModel):
 class AppointmentRequest(BaseModel):
     """Request model for creating appointments"""
     hospital_name: str
-    date: str
-    time: str
+    appointmentDateTime: datetime
 
 
 class Appointment(BaseModel):
@@ -43,10 +45,8 @@ class Appointment(BaseModel):
     id: str
     userId: str
     hospitalId: str
-    patientId: Optional[str] = None
     description: Optional[str] = None
-    date: Optional[str] = None
-    time: Optional[str] = None
+    appointmentDateTime: datetime
     status: Optional[str] = None
     createdAt: Optional[datetime] = None
     updatedAt: Optional[datetime] = None

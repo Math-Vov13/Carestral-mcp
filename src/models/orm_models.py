@@ -37,7 +37,6 @@ class User(Base):
 
     # Relationships
     appointments = relationship("Appointment", back_populates="user")
-    bookings = relationship("Booking", back_populates="user")
     mcps = relationship("MCP", back_populates="user")
     temp_tokens = relationship("TempToken", back_populates="user")
 
@@ -72,34 +71,15 @@ class Appointment(Base):
     id = Column(Text, primary_key=True)
     userId = Column(Text, ForeignKey("User.id"), nullable=False)
     hospitalId = Column(Text, ForeignKey("Hospital.id"), nullable=False)
-    patientId = Column(Text)
     description = Column(Text)
-    date = Column(Text)
-    time = Column(Text)
-    status = Column(Text)
+    appointmentDateTime = Column(DateTime, nullable=False)
+    status = Column(Text, default="pending")
     createdAt = Column(DateTime, default=datetime.utcnow)
     updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     user = relationship("User", back_populates="appointments")
     hospital = relationship("Hospital", back_populates="appointments")
-
-
-class Booking(Base):
-    """Booking model."""
-
-    __tablename__ = "Booking"
-    __table_args__ = {'extend_existing': True}
-
-    id = Column(Text, primary_key=True)
-    userId = Column(Text, ForeignKey("User.id"), nullable=False)
-    description = Column(Text)
-    hospital = Column(Text)
-    createdAt = Column(DateTime, default=datetime.utcnow)
-    updatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    user = relationship("User", back_populates="bookings")
 
 
 class HospitalStatus(Base):

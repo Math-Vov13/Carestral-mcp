@@ -2,6 +2,7 @@
 
 import asyncio
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -61,16 +62,13 @@ async def test_create_appointment(user_id: str, hospital_id: str):
             session=session,
             user_id=user_id,
             hospital_id=hospital_id,
-            patient_id=user_id,
-            date="2024-02-15",
-            time="14:00",
+            appointment_date_time=datetime(2024, 2, 15, 14, 0),
             description="Test appointment",
         )
 
         print(f"\n[OK] Created appointment: {appointment.id}")
         print(f"  Status: {appointment.status}")
-        print(f"  Date: {appointment.date}")
-        print(f"  Time: {appointment.time}")
+        print(f"  DateTime: {appointment.appointmentDateTime}")
         return str(appointment.id)
 
 
@@ -86,8 +84,7 @@ async def test_get_appointment_status(appointment_id: str):
         if appointment:
             print(f"\n[OK] Found appointment: {appointment.id}")
             print(f"  Status: {appointment.status}")
-            print(f"  Date: {appointment.date}")
-            print(f"  Time: {appointment.time}")
+            print(f"  DateTime: {appointment.appointmentDateTime}")
         else:
             print("\n[ERROR] Appointment not found")
 
