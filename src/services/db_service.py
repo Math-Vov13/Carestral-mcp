@@ -41,6 +41,15 @@ async def get_hospital_by_id(session: AsyncSession, hospital_id: str
     return result.scalar_one_or_none()
 
 
+async def get_hospital_by_name(session: AsyncSession, hospital_name: str
+                                ) -> Optional[orm_models.Hospital]:
+    """Get hospital by name (case-insensitive)."""
+    result = await session.execute(
+        select(orm_models.Hospital).where(orm_models.Hospital.name.ilike(f"%{hospital_name}%"))
+    )
+    return result.scalar_one_or_none()
+
+
 async def get_hospital_status(
     session: AsyncSession, hospital_id: str
 ) -> Optional[orm_models.HospitalStatus]:
