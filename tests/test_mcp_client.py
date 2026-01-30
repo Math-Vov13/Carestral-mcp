@@ -11,7 +11,7 @@ import pytest_asyncio
 
 @pytest_asyncio.fixture
 async def mcp_client():
-    from src.server import mcp
+    from server import mcp
     async with Client(FastMCPTransport(mcp)) as client:
         yield client
 
