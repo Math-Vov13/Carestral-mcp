@@ -6,6 +6,7 @@ from typing import AsyncGenerator
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from dotenv import load_dotenv
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
@@ -87,7 +88,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db():
-    """Initialize database tables."""
+    """Initialize database tables and extensions."""
     async with engine.begin() as conn:
-        # Create all tables
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS fuzzystrmatch"))
         await conn.run_sync(Base.metadata.create_all)

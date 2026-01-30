@@ -1,7 +1,6 @@
 """Carestral MCP Server - Main server implementation."""
 
 import logging
-import random
 from typing import List
 
 import fastmcp.server.dependencies
@@ -9,7 +8,7 @@ from fastmcp import Context, FastMCP
 
 from auth import verifier
 from database import get_db
-from models.db_models import AppointmentRequest, Hospital, HospitalStatus
+from models.db_models import AppointmentRequest, Hospital
 from services import db_service
 
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +17,23 @@ logger = logging.getLogger(__name__)
 logging.getLogger("fastmcp.server.auth").setLevel(logging.DEBUG)
 mcp = FastMCP("mcp-carestral", auth=verifier)
 
+
+@mcp.tool
+async def list_hospitals() -> List[Hospital]:
+    """Return all hospitals"""
+
+    async with get_db() as session:
+        db_hospitals = await db_service.get_all_hospitals(session)
+
+        return [
+            Hospital(
+                id=h.id,  # type: ignore[arg-type]
+                name=h.name,  # type: ignore[arg-type]
+                city=h.city or "",  # type: ignore[arg-type]
+                distanceKm=h.distanceKm or 0.0,  # type: ignore[arg-type]
+            )
+            for h in db_hospitals
+        ]
 
 @mcp.tool
 async def search_hospitals(city: str) -> List[Hospital]:
@@ -42,20 +58,24 @@ async def search_hospitals(city: str) -> List[Hospital]:
 
 @mcp.tool
 async def get_hospital_data(hospital_id: str) -> Hospital:
-    """Get hospital details for hospital_id"""
+    """Get hospital details including availability for hospital_id"""
 
-    # Fetch hospital from database
     async with get_db() as session:
         db_hospital = await db_service.get_hospital_by_id(session, hospital_id)
 
         if not db_hospital:
             raise ValueError(f"Hospital with ID {hospital_id} not found")
 
+        db_status = await db_service.get_hospital_status(session, hospital_id)
+
         return Hospital(
             id=db_hospital.id,  # type: ignore[arg-type]
             name=db_hospital.name,  # type: ignore[arg-type]
             city=db_hospital.city or "",  # type: ignore[arg-type]
             distanceKm=db_hospital.distanceKm or 0.0,  # type: ignore[arg-type]
+            availableBeds=db_status.availableBeds or 0 if db_status else 0,  # type: ignore[arg-type]
+            icuBeds=db_status.icuBeds or 0 if db_status else 0,  # type: ignore[arg-type]
+            ventilators=db_status.ventilators or 0 if db_status else 0,  # type: ignore[arg-type]
         )
 
 @mcp.tool
@@ -66,7 +86,7 @@ async def create_rdv(request: AppointmentRequest) -> str:
     if not token:
         raise ValueError("Not authenticated")
 
-    patient_id = token.client_id
+    user_id = token.client_id
 
     async with get_db() as session:
         hospital_identifier = request.hospital_name
@@ -75,65 +95,38 @@ async def create_rdv(request: AppointmentRequest) -> str:
         if not hospital:
             raise ValueError(f"Hospital with name '{hospital_identifier}' not found")
 
-        # Use the actual hospital ID from database
         resolved_hospital_id: str = str(hospital.id)
 
         appointment = await db_service.create_appointment(
             session=session,
-            user_id=patient_id,
+            user_id=user_id,
             hospital_id=resolved_hospital_id,
-            patient_id=patient_id,
-            date=request.date,
-            time=request.time,
+            appointment_date_time=request.appointmentDateTime,
             description="Appointment created via MCP",
         )
 
         return f"Appointment confirmed: {appointment.id}"  # type: ignore[arg-type]
 
 @mcp.tool
-async def get_hospital_dispo(hospital_id: str) -> HospitalStatus:
-    """Return live hospital availability"""
+async def list_rdvs() -> List[dict]:
+    """List all appointments for the authenticated user."""
 
-    # Fetch hospital status from database
-    async with get_db() as session:
-        db_status = await db_service.get_hospital_status(session, hospital_id)
-
-        if not db_status:
-            # If no status exists, return default values
-            return HospitalStatus(
-                hospitalId=hospital_id,
-                availableBeds=0,
-                icuBeds=0,
-                ventilators=0,
-            )
-
-        return HospitalStatus(
-            hospitalId=db_status.hospitalId,  # type: ignore[arg-type]
-            availableBeds=db_status.availableBeds or 0,  # type: ignore[arg-type]
-            icuBeds=db_status.icuBeds or 0,  # type: ignore[arg-type]
-            ventilators=db_status.ventilators or 0,  # type: ignore[arg-type]
-        )
-
-@mcp.tool
-def create_referral(
-    specialist: str, reason: str, priority: str | None = None
-) -> dict:
-    """Create a referral for the authenticated patient to see a specialist."""
     token = fastmcp.server.dependencies.get_access_token()
     if not token:
         raise ValueError("Not authenticated")
 
-    # -------------------------------------------------------------------
-    # - Referral management system
-    referral_id = f"REF-{random.randint(10000,99999)}"
-    return {
-        "referral_id": referral_id,
-        "patient_id": token.client_id,
-        "specialist": specialist,
-        "reason": reason,
-        "priority": priority or "Normal",
-        "status": "Created"
-    }
+    async with get_db() as session:
+        appointments = await db_service.get_user_appointments(session, token.client_id)
+
+        return [
+            {
+                "appointment_id": a.id,  # type: ignore[dict-item]
+                "status": a.status or "Unknown",  # type: ignore[dict-item]
+                "appointmentDateTime": a.appointmentDateTime,  # type: ignore[dict-item]
+                "hospital_id": a.hospitalId,  # type: ignore[dict-item]
+            }
+            for a in appointments
+        ]
 
 @mcp.tool
 async def getappointment_status(appointment_id: str) -> dict:
@@ -165,8 +158,7 @@ async def getappointment_status(appointment_id: str) -> dict:
         return {
             "appointment_id": appointment.id,  # type: ignore[dict-item]
             "status": appointment.status or "Unknown",  # type: ignore[dict-item]
-            "date": appointment.date,  # type: ignore[dict-item]
-            "time": appointment.time,  # type: ignore[dict-item]
+            "appointmentDateTime": appointment.appointmentDateTime,  # type: ignore[dict-item]
             "hospital_id": appointment.hospitalId,  # type: ignore[dict-item]
         }
 

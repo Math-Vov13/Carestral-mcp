@@ -1,8 +1,9 @@
 """Database service layer for handling database operations."""
 
+from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from models import orm_models
@@ -24,10 +25,19 @@ async def get_user_by_email(session: AsyncSession, email: str) -> Optional[orm_m
     return result.scalar_one_or_none()
 
 
+async def get_all_hospitals(session: AsyncSession) -> List[orm_models.Hospital]:
+    """Get all hospitals."""
+    result = await session.execute(select(orm_models.Hospital))
+    return list(result.scalars().all())
+
+
 async def get_hospitals_by_city(session: AsyncSession, city: str) -> List[orm_models.Hospital]:
-    """Get hospitals by city."""
+    """Get hospitals by city (fuzzy match using levenshtein)."""
+    distance = func.levenshtein(func.lower(orm_models.Hospital.city), func.lower(city))
     result = await session.execute(
-        select(orm_models.Hospital).where(orm_models.Hospital.city == city)
+        select(orm_models.Hospital)
+        .where(distance <= 5)
+        .order_by(distance)
     )
     return list(result.scalars().all())
 
@@ -43,9 +53,13 @@ async def get_hospital_by_id(session: AsyncSession, hospital_id: str
 
 async def get_hospital_by_name(session: AsyncSession, hospital_name: str
                                 ) -> Optional[orm_models.Hospital]:
-    """Get hospital by name (case-insensitive)."""
+    """Get closest hospital by name (fuzzy match using levenshtein)."""
+    distance = func.levenshtein(func.lower(orm_models.Hospital.name), func.lower(hospital_name))
     result = await session.execute(
-        select(orm_models.Hospital).where(orm_models.Hospital.name.ilike(f"%{hospital_name}%"))
+        select(orm_models.Hospital)
+        .where(distance <= 10)
+        .order_by(distance)
+        .limit(1)
     )
     return result.scalar_one_or_none()
 
@@ -66,9 +80,7 @@ async def create_appointment(
     session: AsyncSession,
     user_id: str,
     hospital_id: str,
-    patient_id: str,
-    date: str,
-    time: str,
+    appointment_date_time: datetime,
     description: str | None = None,
 ) -> orm_models.Appointment:
     """Create a new appointment."""
@@ -78,11 +90,9 @@ async def create_appointment(
         id=str(uuid.uuid4()),
         userId=user_id,
         hospitalId=hospital_id,
-        patientId=patient_id,
-        date=date,
-        time=time,
+        appointmentDateTime=appointment_date_time,
         description=description,
-        status="scheduled",
+        status="pending",
     )
     session.add(appointment)
     await session.flush()
