@@ -20,7 +20,7 @@ mcp = FastMCP("mcp-carestral", auth=verifier)
 
 @mcp.tool
 async def list_hospitals() -> List[Hospital]:
-    """Return all hospitals"""
+    """List all hospitals available."""
 
     async with get_db() as session:
         db_hospitals = await db_service.get_all_hospitals(session)
@@ -37,7 +37,7 @@ async def list_hospitals() -> List[Hospital]:
 
 @mcp.tool
 async def search_hospitals(city: str) -> List[Hospital]:
-    """Return nearby hospitals for a given city"""
+    """Search all nearby hospitals for a given city"""
 
     # Fetch hospitals from database
     async with get_db() as session:
@@ -58,7 +58,7 @@ async def search_hospitals(city: str) -> List[Hospital]:
 
 @mcp.tool
 async def get_hospital_data(hospital_id: str) -> Hospital:
-    """Get hospital details including availability for hospital_id"""
+    """Get hospital details including availability from hospital_id. The id can't be the name but the exact id in hospital list. If you don't have the correct id, use the tool 'list_hospitals'"""
 
     async with get_db() as session:
         db_hospital = await db_service.get_hospital_by_id(session, hospital_id)
@@ -80,7 +80,7 @@ async def get_hospital_data(hospital_id: str) -> Hospital:
 
 @mcp.tool
 async def create_rdv(request: AppointmentRequest) -> str:
-    """Create an appointment in hospital system. When the rdv is taken, you can ask user to load rdv in its own Google Calendar."""
+    """Create an appointment in hospital system. When the rdv is taken, you can ask user to load rdv in its own Google Calendar by using the correct tool."""
 
     token = fastmcp.server.dependencies.get_access_token()
     if not token:
@@ -129,7 +129,7 @@ async def list_rdvs() -> List[dict]:
         ]
 
 @mcp.tool
-async def getappointment_status(appointment_id: str) -> dict:
+async def get_appointment_status(appointment_id: str) -> dict:
     """Get the status of an appointment owned by the authenticated user."""
 
     token = fastmcp.server.dependencies.get_access_token()
