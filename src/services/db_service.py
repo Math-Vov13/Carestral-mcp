@@ -86,6 +86,10 @@ async def create_appointment(
     """Create a new appointment."""
     import uuid
 
+    # Strip timezone info to match TIMESTAMP WITHOUT TIME ZONE columns
+    if appointment_date_time.tzinfo is not None:
+        appointment_date_time = appointment_date_time.replace(tzinfo=None)
+
     appointment = orm_models.Appointment(
         id=str(uuid.uuid4()),
         userId=user_id,
